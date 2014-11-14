@@ -66,6 +66,7 @@ class TermPlanner:
         You may not change this method in any way!
         """
         self.course = parse_course_data(filename)
+        self.filename = filename
 
     def is_valid(self, schedule):
         """ (TermPlanner, list of (list of str)) -> bool
@@ -74,25 +75,28 @@ class TermPlanner:
         Note that you are *NOT* required to specify why a schedule is invalid,
         though this is an interesting exercise!
         """
-        copy_course = copy(self.course)
         actually_taken = []
         if schedule == []:
             return True
         else:
             for sch in schedule:
                 for cour in sch:
-                    if cour not in copy_course:
+                    if cour not in self.course:
+                        restore(self.course)
                         return False
                     else:
-                        if prereqs_taken(cour, copy_course):
-                            take(cour, copy_course)
+                        if prereqs_taken(cour, self.course):
+                            take(cour, self.course)
                             actually_taken.append(cour)
                         else:
+                            restore(self.course)
                             return False
             for i in range(len(actually_taken)):
                 for j in range(i+1,len(actually_taken)):
                     if actually_taken[i] == actually_taken[j]:
+                        restore(self.course)
                         return False
+            restore(self.course)
             return True
 
 
@@ -108,22 +112,22 @@ class TermPlanner:
         If no valid schedule can be formed from these courses, return an
         empty list.
         """
-        copy_course = copy(self.course)
         copy_want = selected_courses[:]
         schedule = []
         for i in range(len(selected_courses)):
             sch = []
             for cour in copy_want:
-                if prereqs_taken(cour, copy_course) and len(sch) < 5:
+                if prereqs_taken(cour, self.course) and len(sch) < 5:
                     sch.append(cour)
             for course in sch:
-                take(course, copy_course)
+                take(course, self.course)
                 copy_want.remove(course)
             sch.sort()
             if sch != []:
                 schedule.append(sch)
         if len(copy_want) != 0:
             schedule.append(copy_want)
+        restore(self.course)
         if self.is_valid(schedule):
             return schedule
         else:
@@ -132,9 +136,18 @@ class TermPlanner:
 
 
 
+def restore(course):
+    if course.prereqs == []:
+        if course.taken == True:
+            course.taken = False
+    else:
+        for prereq in course.prereqs:
+            if prereq.taken == True:
+                prereq.taken = False
+                restore(prereq)
+            else:
+                restore(prereq)
 
-def copy(course):
-    return Course(course.name, course.prereqs)
 
 def take(code, course):
     if course.name == code:

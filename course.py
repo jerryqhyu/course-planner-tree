@@ -122,7 +122,7 @@ class Course:
         for prereq in self.prereqs:
             if prereq.taken is False:
                 result += [prereq.name] + prereq.missing_prereqs()
-                result.sort()
+        result.sort()
         return result
 
     def __contains__(self, code):
