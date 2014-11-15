@@ -41,14 +41,7 @@ def parse_course_data(filename):
                 courses[classes[1]] = Course(classes[1])
             if courses[classes[0]] not in courses[classes[1]].prereqs:
                 courses[classes[1]].add_prereq(courses[classes[0]])
-    top = None
-    for cour in courses:
-        boo = True
-        for compare in courses:
-            if courses[cour] in courses[compare].prereqs:
-                boo = False
-        if boo:
-            return courses[cour]
+    return get_top(courses)
 
 class TermPlanner:
     """Tool for planning course enrolment over multiple terms.
@@ -66,7 +59,6 @@ class TermPlanner:
         You may not change this method in any way!
         """
         self.course = parse_course_data(filename)
-        self.filename = filename
 
     def is_valid(self, schedule):
         """ (TermPlanner, list of (list of str)) -> bool
@@ -75,27 +67,29 @@ class TermPlanner:
         Note that you are *NOT* required to specify why a schedule is invalid,
         though this is an interesting exercise!
         """
-        actually_taken = []
+        course_taken = []
         if schedule == []:
             return True
         else:
             for sch in schedule:
+                taking = []
                 for cour in sch:
                     if cour not in self.course:
+                        print(cour)
                         restore(self.course)
                         return False
                     else:
                         if prereqs_taken(cour, self.course):
-                            take(cour, self.course)
-                            actually_taken.append(cour)
+                            taking.append(cour)
                         else:
                             restore(self.course)
                             return False
-            for i in range(len(actually_taken)):
-                for j in range(i+1,len(actually_taken)):
-                    if actually_taken[i] == actually_taken[j]:
-                        restore(self.course)
-                        return False
+                for item in taking:
+                    take(item, self.course)
+                    course_taken.append(item)
+            if repeats(course_taken):
+                restore(self.course)
+                return False
             restore(self.course)
             return True
 
@@ -115,16 +109,7 @@ class TermPlanner:
         copy_want = selected_courses[:]
         schedule = []
         for i in range(len(selected_courses)):
-            sch = []
-            for cour in copy_want:
-                if prereqs_taken(cour, self.course) and len(sch) < 5:
-                    sch.append(cour)
-            for course in sch:
-                take(course, self.course)
-                copy_want.remove(course)
-            sch.sort()
-            if sch != []:
-                schedule.append(sch)
+            add_possible_schedule(schedule, copy_want, self.course)
         if len(copy_want) != 0:
             schedule.append(copy_want)
         restore(self.course)
@@ -134,19 +119,32 @@ class TermPlanner:
             return []
 
 
+def get_top(courses):
+    top = None
+    for cour in courses:
+        boo = True
+        for compare in courses:
+            if courses[cour] in courses[compare].prereqs:
+                boo = False
+        if boo:
+            return courses[cour]
 
+def repeats(lst):
+    for i in range(len(lst)):
+        for j in range(i+1,len(lst)):
+            if lst[i] == lst[j]:
+                return True
+    return False
 
 def restore(course):
-    if course.prereqs == []:
-        if course.taken == True:
-            course.taken = False
-    else:
-        for prereq in course.prereqs:
-            if prereq.taken == True:
-                prereq.taken = False
-                restore(prereq)
-            else:
-                restore(prereq)
+    if course.taken == True:
+        course.taken = False
+    for prereq in course.prereqs:
+        if prereq.taken == True:
+            prereq.taken = False
+            restore(prereq)
+        else:
+            restore(prereq)
 
 
 def take(code, course):
@@ -160,10 +158,7 @@ def take(code, course):
 
 def prereqs_taken(code,course):
     if course.name == code:
-        for cour in course.prereqs:
-            if cour.taken == False:
-                return False
-        return True
+        return course.is_takeable()
     elif course.prereqs == []:
         return True
     else:
@@ -171,3 +166,15 @@ def prereqs_taken(code,course):
             if not prereqs_taken(code,cour):
                 return False
         return True
+
+def add_possible_schedule(schedule, selected, course_tree):
+    sch = []
+    for cour in selected:
+        if prereqs_taken(cour, course_tree) and len(sch) < 5:
+            sch.append(cour)
+    for course in sch:
+        take(course, course_tree)
+        selected.remove(course)
+    sch.sort()
+    if sch != []:
+        schedule.append(sch)

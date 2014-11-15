@@ -30,10 +30,19 @@ class TestIsValid(unittest.TestCase):
     def setUp(self):
 
         # Single prereq
-        self.single = TermPlanner('tests/single.txt')
+        self.single = TermPlanner('tests/lol.txt')
 
     def test_single_two(self):
-        self.assertTrue(self.single.is_valid([['CSC108'], ['CSC148']]))
+        self.assertTrue(self.single.is_valid([['101'], ['102']]))
+
+    def test_valid_many(self):
+        self.assertTrue(self.single.is_valid([['101','102','204','209','103'], ['201','202','104','105','106'],['203'],['301']]))
+        self.assertTrue(self.single.is_valid([['110','111','112','113','114'], ['207','208','209'],['303']]))
+        self.assertTrue(self.single.is_valid([[], ['101'],['209']]))
+
+    def test_invalid_many(self):
+        self.assertFalse(self.single.is_valid([['101'],['301']]))
+        self.assertFalse(self.single.is_valid([['101','201']]))
 
 
 class TestPlanner(unittest.TestCase):
