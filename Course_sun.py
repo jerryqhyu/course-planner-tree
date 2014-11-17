@@ -67,6 +67,8 @@ class Course:
         Return True if the user can take this course.
         A course is takeable if and only if all of its prerequisites are taken.
         """
+        if self.taken==True:
+            return False
         for i in self.prereqs:
             if i.taken is False:
                 return False
@@ -79,7 +81,7 @@ class Course:
         Do nothing if self.taken is already True.
         Raise UntakeableError if this course is not takeable.
         """
-        if self.is_takeable:
+        if self.is_takeable():
             self.taken = True
         else:
             raise UntakeableError
@@ -93,13 +95,11 @@ class Course:
         - prereq has this course in its prerequisite tree, or
         - this course already has prereq in its prerequisite tree
         """
-        for i in prereq.prereqs:
-            if self.name == i.name:
-                raise PrerequisiteError
-        for j in self.prereqs:
-            if prereq.name == j.name:
-                raise PrerequisiteError
-        self.prereqs += [prereq]
+        if check_prereq(self,prereq) and check_prereq(prereq,self):
+            self.prereqs += [prereq]
+        else:
+            raise PrerequisiteError
+    
 
     def missing_prereqs(self):
         """Does not include itself!!!!"""
@@ -128,3 +128,12 @@ class Course:
                 temp=i.root_locate(course_name)
                 if temp is not None:
                     return temp
+                
+def check_prereq(pre,cour):
+        if pre.name==cour.name:
+            return False
+        else:
+            for i in cour.prereqs:
+                if not check_prereq(pre,i):
+                    return False
+            return True
