@@ -19,7 +19,7 @@ to store prerequisite information.
 
 TermPlanner: answers queries about schedules based on prerequisite tree.
 """
-from course import Course
+from course_sun import Course, check_prereq
 
 def parse_course_data(filename):
     """ (str) -> Course
@@ -133,21 +133,62 @@ class TermPlanner:
         """
         T=TermPlanner(self.filename)
         sc=selected_courses[:]
+        print(sc)
         term=[]
         result=[]
+        same=False
         i=0
         while i<len(sc):
+            print("i:{}".format(i))
+            print("term:{}".format(term))
             this_course=T.course.root_locate(sc[i])
+            print('this_course.name={}'.format(this_course.name))
             if this_course.is_takeable():
-                term.append(sc.pop(i))
-                this_course.take()
-                i=0
-                if len(term)==5:
-                    result.append(term[:])
-                    term=[]
+                judge=True
+                for j in term:
+                    if check_prereq(this_course,self.course.root_locate(j)) and check_prereq(self.course.root_locate(j),this_course):
+                        pass
+                    else:
+                        judge=False
+                        print("judge==False")
+                if judge==True:
+                    print("the course is takeable")
+                    term.append(sc.pop(i))
+                    print('this_course.name={}'.format(this_course.name))
+                    print("term:{}".format(term))
+                    this_course.take()
+                    print("the course is taken")
+                    i=0
+                    same=False
+                    if len(term)==5:
+                        print("len(term)==5")
+                        result.append(term[:])
+                        print("result:{}".format(result))
+                        term=[]
+                        print("term:{}".format(term))
+                        print("result:{}".format(result))
+                else:
+                    if i==len(sc)-1 and same==False:
+                        print("Wing up")
+                        same=True
+                        i=0
+                        result.append(term[:])
+                        term=[]
+                    else:
+                        i+=1
             else:
-                i+=1
+                if i==len(sc)-1 and same==False:
+                    print("Wing up")
+                    i=0
+                    same=True
+                    result.append(term[:])
+                    term=[]                    
+                else:
+                    i+=1
+        print("term:{}".format(term))
         result.append(term[:])
-        if len(sc) is not 0 or self.is_valid(result):
-            return []
-        return result
+        print("term:{}".format(term))
+        print("result:{}".format(result))
+        if len(sc) is 0 and self.is_valid(result):
+            return result
+        return []
