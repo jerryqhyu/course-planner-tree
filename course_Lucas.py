@@ -13,6 +13,7 @@
 # ---------------------------------------------
 """Course prerequisite data structure.
 
+
 This module contains the class that should store all of the
 data about course prerequisites and track taken courses.
 Note that by tracking "taken" courses, we are restricting the use
