@@ -32,16 +32,16 @@ def parse_course_data(filename):
     See assignment handout for details.
     """
     courses = {}
-    with open(filename,'r') as source:
+    with open(filename, 'r') as source:
         for line in source:
             classes = line.split()
             if classes[0] not in courses:
                 courses[classes[0]] = Course(classes[0])
             if classes[1] not in courses:
                 courses[classes[1]] = Course(classes[1])
-            if courses[classes[0]] not in courses[classes[1]].prereqs:
-                courses[classes[1]].add_prereq(courses[classes[0]])
+            courses[classes[1]].add_prereq(courses[classes[0]])
     return get_top(courses)
+
 
 class TermPlanner:
     """Tool for planning course enrolment over multiple terms.
@@ -75,7 +75,6 @@ class TermPlanner:
                 taking = []
                 for cour in sch:
                     if cour not in self.course:
-                        print(cour)
                         restore(self.course)
                         return False
                     else:
@@ -92,7 +91,6 @@ class TermPlanner:
                 return False
             restore(self.course)
             return True
-
 
     def generate_schedule(self, selected_courses):
         """ (TermPlanner, list of str) -> list of (list of str)
@@ -120,6 +118,12 @@ class TermPlanner:
 
 
 def get_top(courses):
+    """ (Dictionary of Courses) -> Course
+
+    Return the topmost course in a course dictionary, a topmost course
+    is defined as the course that does not appear in any other course's
+    prereq list.
+    """
     top = None
     for cour in courses:
         boo = True
@@ -129,18 +133,28 @@ def get_top(courses):
         if boo:
             return courses[cour]
 
+
 def repeats(lst):
+    """ (lst of str) -> bool
+
+    Return True if the list contains repeating elements, false otherwise.
+    """
     for i in range(len(lst)):
-        for j in range(i+1,len(lst)):
+        for j in range(i+1, len(lst)):
             if lst[i] == lst[j]:
                 return True
     return False
 
+
 def restore(course):
-    if course.taken == True:
+    """ (Course) -> NoneType
+
+    Restore a course tree and all its subtrees to an untaken state.
+    """
+    if course.taken is True:
         course.taken = False
     for prereq in course.prereqs:
-        if prereq.taken == True:
+        if prereq.taken is True:
             prereq.taken = False
             restore(prereq)
         else:
@@ -148,26 +162,42 @@ def restore(course):
 
 
 def take(code, course):
+    """ (str, Course) -> NoneType
+
+    Find the course in a course tree by name and take it.
+    """
     if course.name == code:
         course.take()
     elif course.prereqs == []:
         pass
     else:
         for cour in course.prereqs:
-            take(code,cour)
+            take(code, cour)
 
-def prereqs_taken(code,course):
+
+def prereqs_taken(code, course):
+    """ (str, Course) -> bool
+
+    Find a course in a course tree, and return True if all the prereqs of
+    the course is taken, false otherwise.
+    """
     if course.name == code:
         return course.is_takeable()
     elif course.prereqs == []:
         return True
     else:
         for cour in course.prereqs:
-            if not prereqs_taken(code,cour):
+            if not prereqs_taken(code, cour):
                 return False
         return True
 
+
 def add_possible_schedule(schedule, selected, course_tree):
+    """ (lst of (list of str), list of str, Course) -> NoneType
+
+    Find possible schedule based on the taken status of the courses,
+    generate a one-term schedule, and add it to the schedule list.
+    """
     sch = []
     for cour in selected:
         if prereqs_taken(cour, course_tree) and len(sch) < 5:

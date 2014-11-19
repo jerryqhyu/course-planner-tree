@@ -68,7 +68,7 @@ class Course:
         """
         if self.prereqs == []:
             return True
-        elif self.taken == True:
+        elif self.taken is True:
             return True
         else:
             for course in self.prereqs:
@@ -126,6 +126,11 @@ class Course:
         return result
 
     def __contains__(self, code):
+        """ (Course, str) -> bool
+
+        Return True if the course tree contains a course subtree, recognized
+         by course name, and false otherwise.
+        """
         if self.name == code:
             return True
         elif self.prereqs == []:
