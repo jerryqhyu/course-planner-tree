@@ -1,0 +1,194 @@
+# Assignment 2 - Course Planning!
+#
+# CSC148 Fall 2014, University of Toronto
+# Instructor: David Liu
+# ---------------------------------------------
+# STUDENT INFORMATION
+#
+# List your group members below, one per line, in format
+# <full name>, <utorid>
+# Chuanqi Sun, sunchuan
+#
+#
+# ---------------------------------------------
+"""Program for helping users plan schedules.
+
+This module contains the main class that is used to interact with users
+who are trying to plan their schedules. It requires the course module
+to store prerequisite information.
+
+TermPlanner: answers queries about schedules based on prerequisite tree.
+"""
+from course_sun import Course, check_prereq
+
+def parse_course_data(filename):
+    """ (str) -> Course
+
+    Read in prerequisite data from the file called filename,
+    create the Course data structures for the data,
+    and then return the root (top-most) course.
+
+    See assignment handout for details.
+    """
+    #The simple and crude style
+    courselist=[]
+    root=False
+    with open(filename, 'r') as my_file:
+        for line in my_file:
+            str=line.split()
+            courselist.append(Course(str[1],[Course(str[0])]))
+        for i in range(len(courselist)):
+            root=True
+            for j in range(len(courselist)):
+                if courselist[i].name == courselist[j].prereqs[0].name:
+                    root=False
+                    break
+            if root==True:
+                root=Course(courselist[i].name)
+                break
+        root.prereqs=[]
+        return get_root(courselist,root)
+    
+def get_root(courselist,root):
+    for i in range(len(courselist)):
+        if courselist[i].name==root.name:
+            root.add_prereq(Course(courselist[i].prereqs[0].name))
+            get_root(courselist,root.prereqs[-1])
+    return root
+    
+class TermPlanner:
+    """Tool for planning course enrolment over multiple terms.
+
+    Attributes:
+    - course (Course): tree containing all available courses
+    """
+
+    def __init__(self, filename):
+        """ (TermPlanner, str) -> NoneType
+
+        Create a new term planning tool based on the data in the file
+        named filename.
+
+        You may not change this method in any way!
+        """
+        self.course = parse_course_data(filename)
+        self.filename=filename
+
+    def is_valid(self, schedule):
+        """ (TermPlanner, list of (list of str)) -> bool
+
+        Return True if schedule is a valid schedule.
+        Note that you are *NOT* required to specify why a schedule is invalid,
+        though this is an interesting exercise!
+        """
+        T=TermPlanner(self.filename)
+        for i in schedule:
+            for j in i:
+                if T.course_located(j,i) is not True:
+                    #print(6)
+                    return False
+        return True
+            
+            
+    def course_located(self,cname,termcourse,cour=Course("xx")):
+        if cour.name=="xx":
+            cour=self.course
+        if cour.name==cname:
+            #print(1)
+            if not cour.taken:
+                #print(2)
+                if cour.is_takeable():
+                    #print(3)
+                    for i in termcourse:
+                        #print(4)
+                        for j in cour.prereqs:
+                            if i==j.name:
+                                #print(5)
+                                return False
+                    cour.taken=True
+                    return True
+            else:
+                return False
+        else:
+            result=None
+            #print(7)
+            for i in cour.prereqs:
+                #print(8)
+                result=self.course_located(cname,termcourse,i)
+                if result is not None:
+                    #print(9)
+                    return result        
+            
+    def generate_schedule(self, selected_courses):
+        """ (TermPlanner, list of str) -> list of (list of str)
+
+        Return a schedule containing the courses in selected_courses that
+        satisfies the restrictions given in the assignment specification.
+
+        You may assume that all the courses in selected_courses appear in
+        self.course.
+
+        If no valid schedule can be formed from these courses, return an
+        empty list.
+        """
+        T=TermPlanner(self.filename)
+        sc=selected_courses[:]
+        print(sc)
+        term=[]
+        result=[]
+        same=False
+        i=0
+        while i<len(sc):
+            print("i:{}".format(i))
+            print("term:{}".format(term))
+            this_course=T.course.root_locate(sc[i])
+            print('this_course.name={}'.format(this_course.name))
+            if this_course.is_takeable():
+                judge=True
+                for j in term:
+                    if check_prereq(this_course,self.course.root_locate(j)) and check_prereq(self.course.root_locate(j),this_course):
+                        pass
+                    else:
+                        judge=False
+                        print("judge==False")
+                if judge==True:
+                    print("the course is takeable")
+                    term.append(sc.pop(i))
+                    print('this_course.name={}'.format(this_course.name))
+                    print("term:{}".format(term))
+                    this_course.take()
+                    print("the course is taken")
+                    i=0
+                    same=False
+                    if len(term)==5:
+                        print("len(term)==5")
+                        result.append(term[:])
+                        print("result:{}".format(result))
+                        term=[]
+                        print("term:{}".format(term))
+                        print("result:{}".format(result))
+                else:
+                    if i==len(sc)-1 and same==False:
+                        print("Wing up")
+                        same=True
+                        i=0
+                        result.append(term[:])
+                        term=[]
+                    else:
+                        i+=1
+            else:
+                if i==len(sc)-1 and same==False:
+                    print("Wing up")
+                    i=0
+                    same=True
+                    result.append(term[:])
+                    term=[]                    
+                else:
+                    i+=1
+        print("term:{}".format(term))
+        result.append(term[:])
+        print("term:{}".format(term))
+        print("result:{}".format(result))
+        if len(sc) is 0 and self.is_valid(result):
+            return result
+        return []
