@@ -71,21 +71,8 @@ class TermPlanner:
         if schedule == []:
             return True
         else:
-            for sch in schedule:
-                taking = []
-                for cour in sch:
-                    if cour not in self.course:
-                        restore(self.course)
-                        return False
-                    else:
-                        if prereqs_taken(cour, self.course):
-                            taking.append(cour)
-                        else:
-                            restore(self.course)
-                            return False
-                for item in taking:
-                    take(item, self.course)
-                    course_taken.append(item)
+            if check_validity(schedule, course_taken, self.course) is False:
+                return False
             if repeats(course_taken):
                 restore(self.course)
                 return False
@@ -190,6 +177,32 @@ def prereqs_taken(code, course):
             if not prereqs_taken(code, cour):
                 return False
         return True
+
+
+def check_validity(schedule, taken, course_tree):
+    """ (lst of (list of str), list of str, Course) -> Bool
+
+    Check if the courses in schedule in in the Coursetree, and check if every
+    course in schedule is taken after all the prereqs are taken, return False
+    if either is False, True if every course in schedule exists and are taken
+    in an acceptable order.
+    """
+    for sch in schedule:
+        taking = []
+        for cour in sch:
+            if cour not in course_tree:
+                restore(course_tree)
+                return False
+            else:
+                if prereqs_taken(cour, course_tree):
+                    taking.append(cour)
+                else:
+                    restore(course_tree)
+                    return False
+        for item in taking:
+            take(item, course_tree)
+            taken.append(item)
+    return True
 
 
 def add_possible_schedule(schedule, selected, course_tree):

@@ -25,6 +25,15 @@ class TestParser(unittest.TestCase):
         for p in prereqs:
             self.assertEqual([], p.prereqs)
 
+    def test_all_in_course(self):
+        filename = 'tests/lol.txt'
+        top = parse_course_data(filename)
+        with open(filename, 'r') as source:
+                for line in source:
+                    classes = line.split()
+                    self.assertTrue(classes[0] in top)
+                    self.assertTrue(classes[1] in top)
+
 
 class TestIsValid(unittest.TestCase):
     def setUp(self):
@@ -39,11 +48,18 @@ class TestIsValid(unittest.TestCase):
         self.assertTrue(self.single.is_valid([['101','102','204','209','103'], ['201','202','104','105','106'],['203'],['301']]))
         self.assertTrue(self.single.is_valid([['110','111','112','113','114'], ['207','208','209'],['303']]))
         self.assertTrue(self.single.is_valid([[], ['101'],['209']]))
+        self.assertTrue(self.single.is_valid([[],[],[],[],[],[],[],[],[]]))
+
 
     def test_invalid_many(self):
         self.assertFalse(self.single.is_valid([['101'],['301']]))
         self.assertFalse(self.single.is_valid([['101','201']]))
 
+    def test_invalid_repeat(self):
+        self.assertFalse(self.single.is_valid([['101'],['101']]))
+
+    def test_invalid_not_in_tree(self):
+        self.assertFalse(self.single.is_valid([['999']]))
 
 class TestPlanner(unittest.TestCase):
     def setUp(self):

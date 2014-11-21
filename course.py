@@ -100,9 +100,9 @@ class Course:
         """
         if prereq == self:
             raise PrerequisiteError
-        elif prereq in self.prereqs:
+        elif prereq.name in self:
             raise PrerequisiteError
-        elif self in prereq.prereqs:
+        elif self.name in prereq:
             raise PrerequisiteError
         else:
             self.prereqs.append(prereq)
