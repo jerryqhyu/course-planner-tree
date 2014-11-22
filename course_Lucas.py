@@ -13,7 +13,6 @@
 # ---------------------------------------------
 """Course prerequisite data structure.
 
-
 This module contains the class that should store all of the
 data about course prerequisites and track taken courses.
 Note that by tracking "taken" courses, we are restricting the use
@@ -65,18 +64,23 @@ class Course:
         Return True if the user can take this course.
         A course is takeable if and only if all of its prerequisites are taken.
         """
-        if self.prereqs == []:
-            return True
-        else:
-            count = 0
-            for i in range(len(self.prereqs)):
-                if self.prereqs[i].taken == False:
-                    count += 1
+        #if self.prereqs == []:
+            #return True
+        #else:
+            #count = 0
+            #for i in range(len(self.prereqs)):
+                #if self.prereqs[i].taken == False:
+                    #count += 1
 
-            if count == 0:
-                return True
-            else:
+            #if count == 0:
+                #return True
+            #else:
+                #return False
+                
+        for pre_course in self.prereqs:
+            if pre_course == False:
                 return False
+        return True
                 
 
     def take(self):
@@ -86,12 +90,15 @@ class Course:
         Do nothing if self.taken is already True.
         Raise UntakeableError if this course is not takeable.
         """
-        if self.is_takeable() == False:
-            raise UntakeableError
+        #if self.is_takeable() == False:
+            #raise UntakeableError
+        #else:
+            #if self.taken == False:
+                #self.taken = True            
+        if self.is_takeable():
+            self.taken = True
         else:
-            if self.taken == False:
-                self.taken = True            
-        
+            raise UntakeableError
 
     def add_prereq(self, prereq):
         """ (Course, Course) -> NoneType
@@ -102,11 +109,11 @@ class Course:
         - prereq has this course in its prerequisite tree, or
         - this course already has prereq in its prerequisite tree
         """
-        if self == prereq:
+        if self.name == prereq.name:
             raise PrerequisiteError  
-        elif prereq in self.prereqs:
+        elif self.__contains__(prereq.name):
             raise PrerequisiteError
-        elif self in prereq.prereqs:
+        elif prereq.__contains__(self.name):
             raise PrerequisiteError
         else:
             self.prereqs.append(prereq)
@@ -125,15 +132,16 @@ class Course:
         
         untaken_list = []
         if len(self.prereqs) == 0:
-            return untaken_list
+            return []
         else:
             for item in self.prereqs:
                 if item.taken == False:
-                    untaken_list.append(item.name)
-                    item.missing_prereqs()
+                    untaken_list += [item.name] + item.missing_prereqs()
             untaken_list.sort()
             return untaken_list
-            
+    
+   
+        
             
     def __contains__(self, item):
         if self.name == item:
