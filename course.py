@@ -83,11 +83,10 @@ class Course:
         Do nothing if self.taken is already True.
         Raise UntakeableError if this course is not takeable.
         """
-        if self.taken is False:
-            if self.is_takeable() is True:
-                self.taken = True
-            else:
-                raise UntakeableError
+        if self.is_takeable() is True:
+            self.taken = True
+        else:
+            raise UntakeableError
 
     def add_prereq(self, prereq):
         """ (Course, Course) -> NoneType
@@ -98,9 +97,7 @@ class Course:
         - prereq has this course in its prerequisite tree, or
         - this course already has prereq in its prerequisite tree
         """
-        if prereq == self:
-            raise PrerequisiteError
-        elif prereq.name in self:
+        if prereq.name in self:
             raise PrerequisiteError
         elif self.name in prereq:
             raise PrerequisiteError

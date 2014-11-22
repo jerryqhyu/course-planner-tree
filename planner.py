@@ -72,8 +72,9 @@ class TermPlanner:
             return True
         else:
             if check_validity(schedule, course_taken, self.course) is False:
+                restore(self.course)
                 return False
-            if repeats(course_taken):
+            elif repeats(course_taken):
                 restore(self.course)
                 return False
             restore(self.course)
@@ -92,9 +93,12 @@ class TermPlanner:
         empty list.
         """
         copy_want = selected_courses[:]
+        for cour in copy_want:
+            if cour not in self.course:
+                return []
         schedule = []
-        for i in range(len(selected_courses)):
-            add_possible_schedule(schedule, copy_want, self.course)
+        while add_possible_schedule(schedule, copy_want, self.course):
+            pass
         if len(copy_want) != 0:
             schedule.append(copy_want)
         restore(self.course)
@@ -111,13 +115,12 @@ def get_top(courses):
     is defined as the course that does not appear in any other course's
     prereq list.
     """
-    top = None
     for cour in courses:
-        boo = True
+        is_top = True
         for compare in courses:
             if courses[cour] in courses[compare].prereqs:
-                boo = False
-        if boo:
+                is_top = False
+        if is_top:
             return courses[cour]
 
 
@@ -141,11 +144,7 @@ def restore(course):
     if course.taken is True:
         course.taken = False
     for prereq in course.prereqs:
-        if prereq.taken is True:
-            prereq.taken = False
-            restore(prereq)
-        else:
-            restore(prereq)
+        restore(prereq)
 
 
 def take(code, course):
@@ -191,13 +190,11 @@ def check_validity(schedule, taken, course_tree):
         taking = []
         for cour in sch:
             if cour not in course_tree:
-                restore(course_tree)
                 return False
             else:
                 if prereqs_taken(cour, course_tree):
                     taking.append(cour)
                 else:
-                    restore(course_tree)
                     return False
         for item in taking:
             take(item, course_tree)
@@ -221,3 +218,6 @@ def add_possible_schedule(schedule, selected, course_tree):
     sch.sort()
     if sch != []:
         schedule.append(sch)
+        return True
+    else:
+        return False
