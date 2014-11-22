@@ -100,7 +100,7 @@ class TermPlanner:
         while add_possible_schedule(schedule, copy_want, self.course):
             pass
         if len(copy_want) != 0:
-            schedule.append(copy_want)
+            return []
         restore(self.course)
         if self.is_valid(schedule):
             return schedule
